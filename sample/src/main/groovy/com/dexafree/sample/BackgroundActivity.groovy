@@ -21,13 +21,13 @@ public class BackgroundActivity extends Activity {
 
     private Context mContext;
 
-    @SaveInstance
+    //@SaveInstance
     public Person[] myPersons
 
-    @SaveInstance
+    //@SaveInstance
     public Person aPerson
 
-    @SaveInstance
+    //@SaveInstance
     public ArrayList<Person> aParcelableList
 
     @SaveInstance

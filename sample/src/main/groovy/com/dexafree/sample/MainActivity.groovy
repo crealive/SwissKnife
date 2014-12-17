@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcel
+import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -80,6 +82,14 @@ public class MainActivity extends BaseActivity {
 
         def items = generateItems()
         listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items))
+
+        Person me = new Person("Jorge", 22)
+        me.setPhones([1, 8, 4] as int[])
+        Bundle b = new Bundle()
+        b.putParcelable("me", me)
+        Person alsoMe = b.getParcelable("me") as Person
+
+        Log.d("DATA", "Also me: "+alsoMe.name)
     }
 
     List<String> generateItems() {

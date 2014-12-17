@@ -3,7 +3,7 @@ apply plugin: 'me.champeau.gradle.groovy-android'
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "20.0.0"
+    buildToolsVersion "21.1.2"
 
     defaultConfig {
         applicationId "com.dexafree.sample"
@@ -14,7 +14,7 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

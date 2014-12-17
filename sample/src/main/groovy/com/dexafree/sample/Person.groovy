@@ -1,15 +1,19 @@
-package com.dexafree.sample;
+package com.dexafree.sample
 
-
-import android.os.Parcel;
-import android.os.Parcelable
+import android.os.Parcel
+import com.arasthel.swissknife.annotations.Parcelable
 import groovy.transform.CompileStatic;
 
-
-public class Person implements Parcelable {
+@Parcelable
+@CompileStatic
+public class Person {
 
     private String name;
     private int age;
+    private String[] friends = ["Juan", "Lucas"]
+    int[] phones = [123, 456, 789]
+    private ArrayList<String> cities = ["Almería"] as ArrayList<String>
+    private ParcelableClass aParcelable = new ParcelableClass();
 
     String getName() {
         return name;
@@ -27,38 +31,9 @@ public class Person implements Parcelable {
         this.age = age;
     }
 
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.name);
-        dest.writeInt(this.age);
-    }
-
-    public Person() {
-    }
-
     public Person(String name, int age){
         this.name = name;
         this.age = age;
     }
 
-    private Person(Parcel parcel) {
-        this.name = parcel.readString();
-        this.age = parcel.readInt();
-    }
-
-    public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {
-        public Person createFromParcel(Parcel source) {
-            return new Person(source);
-        }
-
-        public Person[] newArray(int size) {
-            return new Person[size];
-        }
-    };
 }
