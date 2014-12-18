@@ -16,5 +16,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @GroovyASTTransformationClass("com.arasthel.swissknife.annotations.ParcelableTransformation")
 @interface Parcelable {
-    String[] excludes() default []
+    Class exclude() default Closure
 }

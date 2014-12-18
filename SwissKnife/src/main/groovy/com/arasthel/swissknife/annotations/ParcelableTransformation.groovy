@@ -15,10 +15,12 @@ import org.codehaus.groovy.ast.expr.ArrayExpression
 import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.CastExpression
 import org.codehaus.groovy.ast.expr.ClassExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.ConstructorCallExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.FieldExpression
+import org.codehaus.groovy.ast.expr.ListExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
@@ -47,10 +49,14 @@ public class ParcelableTransformation implements ASTTransformation, Opcodes {
             Bundle, List, Map, android.os.Parcelable, SparseArray
     ]
 
+    def excludedFields = []
+
     @Override
     void visit(ASTNode[] astNodes, SourceUnit sourceUnit) {
         AnnotationNode annotation = astNodes[0];
         ClassNode annotatedClass = astNodes[1];
+
+        readExcludedFields(annotation, annotatedClass)
 
         // We implement the interface
         annotatedClass.addInterface(ClassHelper.make(android.os.Parcelable))
@@ -78,21 +84,47 @@ public class ParcelableTransformation implements ASTTransformation, Opcodes {
 
     }
 
+    def readExcludedFields(AnnotationNode annotationNode, ClassNode annotatedClass) {
+        Expression excludesExpression = annotationNode.members.exclude as ClosureExpression
+        if(excludesExpression) {
+            (excludesExpression.getCode() as BlockStatement).getStatements().each {
+                String fieldName = ((it as ExpressionStatement).expression as VariableExpression).accessedVariable.name
+                FieldNode excluded = annotatedClass.getField(fieldName)
+                if(excluded) {
+                    excludedFields << excluded
+                }
+            }
+        }
+    }
+
     List<FieldNode> getParcelableFields(ClassNode declaringClass) {
         def parcelableFields = []
         declaringClass.getFields().each { FieldNode field ->
-            // We don't want to parcel static fields
-            if (!field.isStatic()) {
-                ClassNode fieldClass = field.getType()
-                // If it's a primitive, it can be parceled
-                if (ClassHelper.isPrimitiveType(fieldClass)) {
-                    parcelableFields << field
-                } else if (fieldClass.isArray()) {
-                    // If it's an array of primitives, too
-                    if (ClassHelper.isPrimitiveType(fieldClass.getComponentType())) {
+            if(!(field in excludedFields)) {
+                // We don't want to parcel static fields
+                if (!field.isStatic()) {
+                    ClassNode fieldClass = field.getType()
+                    // If it's a primitive, it can be parceled
+                    if (ClassHelper.isPrimitiveType(fieldClass)) {
                         parcelableFields << field
+                    } else if (fieldClass.isArray()) {
+                        // If it's an array of primitives, too
+                        if (ClassHelper.isPrimitiveType(fieldClass.getComponentType())) {
+                            parcelableFields << field
+                        } else {
+                            // If it's an array of objects, find if it's one of the parcelable classes
+                            PARCELABLE_CLASSES.find {
+                                if (fieldClass.isDerivedFrom(ClassHelper.make(it))
+                                        || fieldClass.implementsInterface(ClassHelper.make(it))) {
+                                    parcelableFields << field
+                                    return true
+                                }
+                                return false
+                            }
+                        }
                     } else {
-                        // If it's an array of objects, find if it's one of the parcelable classes
+                        println field.name
+                        // If it's an object, check if it's parcelable
                         PARCELABLE_CLASSES.find {
                             if (fieldClass.isDerivedFrom(ClassHelper.make(it))
                                     || fieldClass.implementsInterface(ClassHelper.make(it))) {
@@ -102,19 +134,8 @@ public class ParcelableTransformation implements ASTTransformation, Opcodes {
                             return false
                         }
                     }
-                } else {
-                    println field.name
-                    // If it's an object, check if it's parcelable
-                    PARCELABLE_CLASSES.find {
-                        if (fieldClass.isDerivedFrom(ClassHelper.make(it))
-                                || fieldClass.implementsInterface(ClassHelper.make(it))) {
-                            parcelableFields << field
-                            return true
-                        }
-                        return false
-                    }
-                }
 
+                }
             }
         }
 

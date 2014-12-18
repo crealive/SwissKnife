@@ -4,7 +4,7 @@ import android.os.Parcel
 import com.arasthel.swissknife.annotations.Parcelable
 import groovy.transform.CompileStatic;
 
-@Parcelable
+@Parcelable(exclude={name;age;friends})
 @CompileStatic
 public class Person {
 
